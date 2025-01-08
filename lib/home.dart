@@ -11,37 +11,34 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text("Manipulação de dodos"),
-          backgroundColor: Colors.blue,
+      appBar: AppBar(
+        backgroundColor: Colors.blue,
+        title: const Text('Lista de Tarefas',
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+
+        ),),
+      ),
+      body: Center(
+        child: const Text(
+          'Welcome to Home Page!',
+          style: TextStyle(fontSize: 18),
         ),
-        body: Container(
-          padding: EdgeInsets.all(32),
-          child: Column(
-            children: <Widget>[
-              TextField(
-                decoration: InputDecoration(labelText: "Digete algo"),
-              ),
-              SizedBox(
-                height: 10.0,
-              ),
-              Row(
-                children: [
-                  TextButton(
-                    onPressed: () {},
-                    child: Text("salvar"),
-                  ),
-                  TextButton(
-                    onPressed: () {},
-                    child: Text(
-                      "ler",
-                      selectionColor: Colors.blueGrey,
-                    ),
-                  ),
-                ],
-              )
-            ],
-          ),
-        ));
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: FloatingActionButton(
+       // radius: 30,
+  //shape: CircularNotchedRectangle(),
+        backgroundColor: Colors.blue,
+        elevation: 3,
+        foregroundColor: Colors.white,
+        onPressed: () {
+          // Add your action here
+        },
+        child: const Icon(Icons.add),
+      ),
+    );
   }
 }
