@@ -1,8 +1,7 @@
-import 'dart:convert';
-import 'dart:io';
-
-import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
+import 'dart:convert'; // Para converter listas/objetos em JSON e vice-versa
+import 'dart:io'; // Para lidar com arquivos no dispositivo
+import 'package:flutter/material.dart'; // Para criar interfaces com Flutter
+import 'package:path_provider/path_provider.dart'; // Para obter diretórios no dispositivo
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -12,37 +11,36 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  // Correctly declaring the task list
-  List<String> _ListaTarefa = ["Tarefa 1", "Tarefa 2", "Tarefa 3"];
+  // Lista de tarefas inicializada com valores de exemplo
+  List<String> _ListaTarefa = [];
+  TextEditingController _controladorTarefa = TextEditingController();
 
-  //metodos
-  _savarPath()async{
+  // Método para salvar a lista de tarefas em um arquivo JSON
+  Future<void> _salvarTarefas() async {
     final Directory directory = await getApplicationDocumentsDirectory();
-    
     final File file = File('${directory.path}/data.json');
-    final String data = jsonEncode(_ListaTarefa);
-    file.writeAsString(data);
-
+    final String data = jsonEncode(_ListaTarefa); // Converte a lista para JSON
+    await file.writeAsString(data); // Salva o JSON no arquivo
   }
-  getPath()async{
+
+  // Método para carregar as tarefas salvas no arquivo
+  Future<void> _carregarTarefas() async {
     final Directory directory = await getApplicationDocumentsDirectory();
     final File file = File('${directory.path}/data.json');
-    if(file.existsSync()){
-      final data = file.readAsStringSync();
-      final json = jsonDecode(data);
-      return json;
+    if (await file.exists()) {
+      final String data = await file.readAsString(); // Lê o conteúdo do arquivo
+      final List<dynamic> json = jsonDecode(data); // Decodifica o JSON
+      setState(() {
+        _ListaTarefa = List<String>.from(json); // Atualiza a lista com os dados do arquivo
+      });
     }
   }
 
-  lerPath()async{
-    final Directory directory = await getApplicationDocumentsDirectory();
-    final File file = File('${directory.path}/data.json');
-    if(file.existsSync()){
-      final data = file.readAsStringSync();
-      final json = jsonDecode(data);
-      return json;
-    }
-
+  // Inicialização do estado do widget
+  @override
+  void initState() {
+    super.initState();
+    _carregarTarefas(); // Carrega as tarefas quando o app é iniciado
   }
 
   @override
@@ -62,17 +60,21 @@ class _HomeState extends State<Home> {
       body: Column(
         children: <Widget>[
           Expanded(
+            // Lista de tarefas com builder para otimizar a renderização
             child: ListView.builder(
               itemCount: _ListaTarefa.length,
               itemBuilder: (context, index) {
                 return ListTile(
-                  title: Text(_ListaTarefa[index]),
+                  title: Text(_ListaTarefa[index]), // Exibe o texto da tarefa
                   trailing: IconButton(
-                    icon: const Icon(Icons.check_box_outline_blank,
-                        color: Color(0xFF080606)),
+                    icon: const Icon(
+                      Icons.check_box_outline_blank,
+                      color: Color(0xFF080606),
+                    ),
                     onPressed: () {
                       setState(() {
-                        _ListaTarefa.removeAt(index); // Remove item on delete
+                        _ListaTarefa.removeAt(index); // Remove a tarefa da lista
+                        _salvarTarefas(); // Salva a lista atualizada
                       });
                     },
                   ),
@@ -87,22 +89,23 @@ class _HomeState extends State<Home> {
         backgroundColor: Colors.blue,
         elevation: 3,
         foregroundColor: Colors.white,
-        onPressed: () {
-          _showAddTaskDialog();
-        },
+        onPressed: _mostrarDialogoAdicionarTarefa, // Chama o diálogo de adicionar
         child: const Icon(Icons.add),
       ),
     );
   }
 
-  void _showAddTaskDialog() {
+  // Método para exibir o diálogo de adicionar tarefa
+  void _mostrarDialogoAdicionarTarefa() {
+    final TextEditingController _controladorTarefa = TextEditingController();
+
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text('Adicionar Tarefa'),
           content: TextField(
-           // controller:  _taskController,
+            controller: _controladorTarefa, // Controlador para obter o texto digitado
             decoration: const InputDecoration(
               labelText: 'Digite a tarefa',
               border: OutlineInputBorder(),
@@ -111,20 +114,20 @@ class _HomeState extends State<Home> {
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Close the dialog
+                Navigator.pop(context); // Fecha o diálogo
               },
               child: const Text('Cancelar'),
             ),
             TextButton(
               onPressed: () {
-               /* setState(() {
-                  if (_taskController.text.isNotEmpty) {
-                    _ListaTarefa.add(_taskController.text); // Add task
+                setState(() {
+                  if (_controladorTarefa.text.isNotEmpty) {
+                    _ListaTarefa.add(_controladorTarefa.text); // Adiciona a tarefa
+                    _salvarTarefas(); // Salva a lista atualizada
                   }
                 });
-                _taskController.clear(); // Clear input
-                Navigator.pop(context); // Close the dialog
-              },*/
+                _controladorTarefa.clear(); // Limpa o campo de texto
+                Navigator.pop(context); // Fecha o diálogo
               },
               child: const Text('Adicionar'),
             ),
