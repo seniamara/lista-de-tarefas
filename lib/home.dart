@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -10,7 +14,36 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   // Correctly declaring the task list
   List<String> _ListaTarefa = ["Tarefa 1", "Tarefa 2", "Tarefa 3"];
-  final TextEditingController _taskController = TextEditingController();
+
+  //metodos
+  _savarPath()async{
+    final Directory directory = await getApplicationDocumentsDirectory();
+    
+    final File file = File('${directory.path}/data.json');
+    final String data = jsonEncode(_ListaTarefa);
+    file.writeAsString(data);
+
+  }
+  getPath()async{
+    final Directory directory = await getApplicationDocumentsDirectory();
+    final File file = File('${directory.path}/data.json');
+    if(file.existsSync()){
+      final data = file.readAsStringSync();
+      final json = jsonDecode(data);
+      return json;
+    }
+  }
+
+  lerPath()async{
+    final Directory directory = await getApplicationDocumentsDirectory();
+    final File file = File('${directory.path}/data.json');
+    if(file.existsSync()){
+      final data = file.readAsStringSync();
+      final json = jsonDecode(data);
+      return json;
+    }
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +102,7 @@ class _HomeState extends State<Home> {
         return AlertDialog(
           title: const Text('Adicionar Tarefa'),
           content: TextField(
-            controller: _taskController,
+           // controller:  _taskController,
             decoration: const InputDecoration(
               labelText: 'Digite a tarefa',
               border: OutlineInputBorder(),
@@ -84,13 +117,14 @@ class _HomeState extends State<Home> {
             ),
             TextButton(
               onPressed: () {
-                setState(() {
+               /* setState(() {
                   if (_taskController.text.isNotEmpty) {
                     _ListaTarefa.add(_taskController.text); // Add task
                   }
                 });
                 _taskController.clear(); // Clear input
                 Navigator.pop(context); // Close the dialog
+              },*/
               },
               child: const Text('Adicionar'),
             ),
