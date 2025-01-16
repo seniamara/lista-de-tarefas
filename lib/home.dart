@@ -1,7 +1,7 @@
-import 'dart:convert'; // Para converter listas/objetos em JSON e vice-versa
-import 'dart:io'; // Para lidar com arquivos no dispositivo
-import 'package:flutter/material.dart'; // Para criar interfaces com Flutter
-import 'package:path_provider/path_provider.dart'; // Para obter diretórios no dispositivo
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -11,36 +11,30 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  // Lista de tarefas inicializada com valores de exemplo
-  List<String> _ListaTarefa = [];
-  TextEditingController _controladorTarefa = TextEditingController();
+  List<Map<String, dynamic>> _listaTarefas = [];
 
-  // Método para salvar a lista de tarefas em um arquivo JSON
   Future<void> _salvarTarefas() async {
-    final Directory directory = await getApplicationDocumentsDirectory();
-    final File file = File('${directory.path}/data.json');
-    final String data = jsonEncode(_ListaTarefa); // Converte a lista para JSON
-    await file.writeAsString(data); // Salva o JSON no arquivo
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/data.json');
+    final data = jsonEncode(_listaTarefas);
+    await file.writeAsString(data);
   }
 
-  // Método para carregar as tarefas salvas no arquivo
   Future<void> _carregarTarefas() async {
-    final Directory directory = await getApplicationDocumentsDirectory();
-    final File file = File('${directory.path}/data.json');
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/data.json');
     if (await file.exists()) {
-      final String data = await file.readAsString(); // Lê o conteúdo do arquivo
-      final List<dynamic> json = jsonDecode(data); // Decodifica o JSON
+      final data = await file.readAsString();
       setState(() {
-        _ListaTarefa = List<String>.from(json); // Atualiza a lista com os dados do arquivo
+        _listaTarefas = List<Map<String, dynamic>>.from(jsonDecode(data));
       });
     }
   }
 
-  // Inicialização do estado do widget
   @override
   void initState() {
     super.initState();
-    _carregarTarefas(); // Carrega as tarefas quando o app é iniciado
+    _carregarTarefas();
   }
 
   @override
@@ -50,33 +44,49 @@ class _HomeState extends State<Home> {
         backgroundColor: Colors.blue,
         title: const Text(
           'Lista de Tarefas',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
       ),
       body: Column(
-        children: <Widget>[
+        children: [
           Expanded(
-            // Lista de tarefas com builder para otimizar a renderização
             child: ListView.builder(
-              itemCount: _ListaTarefa.length,
+              itemCount: _listaTarefas.length,
               itemBuilder: (context, index) {
+                final tarefa = _listaTarefas[index];
                 return ListTile(
-                  title: Text(_ListaTarefa[index]), // Exibe o texto da tarefa
-                  trailing: IconButton(
-                    icon: const Icon(
-                      Icons.check_box_outline_blank,
-                      color: Color(0xFF080606),
+                  title: Text(
+                    tarefa['titulo'],
+                    style: TextStyle(
+                      decoration: tarefa['realizada']
+                          ? TextDecoration.lineThrough
+                          : TextDecoration.none,
                     ),
-                    onPressed: () {
-                      setState(() {
-                        _ListaTarefa.removeAt(index); // Remove a tarefa da lista
-                        _salvarTarefas(); // Salva a lista atualizada
-                      });
-                    },
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          tarefa['realizada']
+                              ? Icons.check_box
+                              : Icons.check_box_outline_blank,
+                          color: Colors.green,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            tarefa['realizada'] = !tarefa['realizada'];
+                            _salvarTarefas();
+                          });
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () {
+                          _confirmarRemocao(index);
+                        },
+                      ),
+                    ],
                   ),
                 );
               },
@@ -84,52 +94,75 @@ class _HomeState extends State<Home> {
           ),
         ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.blue,
-        elevation: 3,
-        foregroundColor: Colors.white,
-        onPressed: _mostrarDialogoAdicionarTarefa, // Chama o diálogo de adicionar
+        onPressed: _mostrarDialogoAdicionarTarefa,
         child: const Icon(Icons.add),
       ),
     );
   }
 
-  // Método para exibir o diálogo de adicionar tarefa
   void _mostrarDialogoAdicionarTarefa() {
     final TextEditingController _controladorTarefa = TextEditingController();
-
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text('Adicionar Tarefa'),
           content: TextField(
-            controller: _controladorTarefa, // Controlador para obter o texto digitado
+            controller: _controladorTarefa,
             decoration: const InputDecoration(
               labelText: 'Digite a tarefa',
               border: OutlineInputBorder(),
             ),
           ),
-          actions: <Widget>[
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Fecha o diálogo
+                if (_controladorTarefa.text.trim().isNotEmpty) {
+                  setState(() {
+                    _listaTarefas.add({
+                      'titulo': _controladorTarefa.text.trim(),
+                      'realizada': false,
+                    });
+                    _salvarTarefas();
+                  });
+                  Navigator.pop(context);
+                }
               },
+              child: const Text('Adicionar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _confirmarRemocao(int index) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Remover Tarefa'),
+          content: const Text('Deseja realmente remover esta tarefa?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
               child: const Text('Cancelar'),
             ),
             TextButton(
               onPressed: () {
                 setState(() {
-                  if (_controladorTarefa.text.isNotEmpty) {
-                    _ListaTarefa.add(_controladorTarefa.text); // Adiciona a tarefa
-                    _salvarTarefas(); // Salva a lista atualizada
-                  }
+                  _listaTarefas.removeAt(index);
+                  _salvarTarefas();
                 });
-                _controladorTarefa.clear(); // Limpa o campo de texto
-                Navigator.pop(context); // Fecha o diálogo
+                Navigator.pop(context);
               },
-              child: const Text('Adicionar'),
+              child: const Text('Remover'),
             ),
           ],
         );
