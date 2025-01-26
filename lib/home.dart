@@ -162,7 +162,7 @@ class _HomeState extends State<Home> {
                 });
                 Navigator.pop(context);
               },
-              child: const Text('Remover'),
+              child: const Text('Remover')
             ),
           ],
         );
